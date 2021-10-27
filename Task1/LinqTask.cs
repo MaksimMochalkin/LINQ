@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Reflection;
+using System.Text;
 using Task1.DoNotChange;
 
 namespace Task1
@@ -134,48 +136,54 @@ namespace Task1
             decimal expensive
         )
         {
-            var cheapList = products.Select(c => new
-                {
-                    Category = cheap,
-                    Products = products.Where(p => p.UnitPrice == products.Select(p => p.UnitPrice).Min()).ToList()
-            }).Select(c => (c.Category, c.Products)).ToList();
+            var result = new List<(decimal category, IEnumerable<Product> products)>();
+            var cheapCategory = products.Select(product =>
+                (
+                   cheap,
+                   products.Select(p => p).Where(p => p.UnitPrice == products.Min(p => p.UnitPrice)).AsEnumerable()
+            )).FirstOrDefault();
 
-            var middleList = products.Select(c => new
-            {
-                Category = middle,
-                Products = products.Where(p => p.UnitPrice != products.Select(p => p.UnitPrice).Min()
-                && p.UnitPrice != products.Select(p => p.UnitPrice).Max()).ToList()
-            }).Select(c => (c.Category, c.Products)).ToList();
+            var middleCategory = products.Select(c =>
+            (
+               middle,
+               products.Where(p => p.UnitPrice != products.Min(p => p.UnitPrice)
+                && p.UnitPrice != products.Max(p => p.UnitPrice)).AsEnumerable()
+            )).FirstOrDefault();
 
-            var expensiveList = products.Select(c => new
-            {
-                Category = expensive,
-                Products = products.Where(p => p.UnitPrice == products.Select(p => p.UnitPrice).Max()).ToList()
-            }).Select(c => (c.Category, c.Products)).ToList();
+            var expensiveCategory = products.Select(c =>
+            (
+                expensive,
+                products.Where(p => p.UnitPrice == products.Max(p => p.UnitPrice)).AsEnumerable()
+            )).FirstOrDefault();
 
-            var unionResult = cheapList.Concat(middleList).Concat(expensiveList).ToList();
+            result.Add(cheapCategory);
+            result.Add(middleCategory);
+            result.Add(expensiveCategory);
 
-            throw new NotImplementedException();
+            return result;
         }
 
         public static IEnumerable<(string city, int averageIncome, int averageIntensity)> Linq9(
             IEnumerable<Customer> customers
         )
         {
-            var result = customers.Where(co => co.Orders.Count() != 0)
-                .Select(c => new
-                {
-                    City = c.City,
-                    AverageIncome = (int)c.Orders.Average(o => o.Total),
-                    AverageIntensity = (int)customers.Average(count => count.Orders.Count())
-                }).Select(res => (res.City, res.AverageIncome, res.AverageIntensity)).ToList();
-
-            return result;
+            return customers.GroupBy(c => c.City)
+                .Select(g =>
+                (
+                    g.Key,
+                    Convert.ToInt32(g.Average(c => c.Orders.Sum(o => o.Total))),
+                    Convert.ToInt32(g.Average(c => c.Orders.Length))
+                ));
         }
 
         public static string Linq10(IEnumerable<Supplier> suppliers)
         {
-            throw new NotImplementedException();
+            var sortedList = suppliers.Select(s => s.Country).OrderBy(s => s.Length).ThenBy(s => s).Distinct().ToList();
+
+            var sb = new StringBuilder();
+            sortedList.ForEach(s => sb.Append(s));
+            
+            return sb.ToString();
         }
     }
 }
