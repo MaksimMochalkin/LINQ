@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Reflection;
 using System.Text;
 using Task1.DoNotChange;
 
@@ -14,10 +10,7 @@ namespace Task1
     {
         public static IEnumerable<Customer> Linq1(IEnumerable<Customer> customers, decimal limit)
         {
-            return (from customer in customers 
-                let total = customer.Orders.Sum(order => order.Total) 
-                where total > limit 
-                select customer);
+            return customers.Where(customer => customer.Orders.Sum(order => order.Total) > limit);
         }
 
         public static IEnumerable<(Customer, IEnumerable<Supplier>)> Linq2(
@@ -45,13 +38,7 @@ namespace Task1
 
         public static IEnumerable<Customer> Linq3(IEnumerable<Customer> customers, decimal limit)
         {
-            var listCustomers = (from customer in customers
-                                 from order in customer.Orders
-                                 where order.Total > limit
-                                 select customer).Distinct().ToList();
-
-            return listCustomers;
-
+            return customers.Where(customer => customer.Orders.Any(order => order.Total > limit)).ToList();
         }
 
         public static IEnumerable<(Customer customer, DateTime dateOfEntry)> Linq4(
