@@ -45,46 +45,61 @@ namespace Task1
             IEnumerable<Customer> customers
         )
         {
-            var filteredCustomers = (from customer in customers
-                                    where customer.Orders.Count() != 0
-                                    select customer).ToList();
+            var result = customers.Where(customer => customer.Orders.Count() > 0)
+                .Select(customer => (customer, customer.Orders.Select(order => order.OrderDate).Min()));
+            //var filteredCustomers = (from customer in customers
+            //                        where customer.Orders.Count() != 0
+            //                        select customer).ToList();
 
-            var customersWithDateOfEntry = (from customer in filteredCustomers
-                      let dateOfEntry = customer.Orders.Select(d => d.OrderDate).Min()
-                      select (customer, dateOfEntry)).Distinct().ToList();
+            //var customersWithDateOfEntry = (from customer in filteredCustomers
+            //          let dateOfEntry = customer.Orders.Select(d => d.OrderDate).Min()
+            //          select (customer, dateOfEntry)).Distinct().ToList();
 
-            return customersWithDateOfEntry;
+            return result;
         }
 
         public static IEnumerable<(Customer customer, DateTime dateOfEntry)> Linq5(
             IEnumerable<Customer> customers
         )
         {
-            var filteredCustomers = (from customer in customers
-                                     where customer.Orders.Count() != 0
-                                     select customer).ToList();
+            var result = customers.Where(customer => customer.Orders.Count() > 0)
+                .Select(customer => (customer, customer.Orders.Select(order => order.OrderDate).Min()))
+                .OrderBy(customer => customer.Item2.Year)
+                .ThenBy(customer => customer.Item2.Month)
+                .ThenByDescending(customer => customer.customer.Orders.Sum(order => order.Total))
+                .ThenBy(customer => customer.customer.CompanyName);
 
-            var customersWithDateOfEntry = (from customer in filteredCustomers
-                                            let dateOfEntry = customer.Orders.Select(d => d.OrderDate)
-                                            select (customer, dateOfEntry.Min())).Distinct().ToList();
+            //var filteredCustomers = (from customer in customers
+            //                         where customer.Orders.Count() != 0
+            //                         select customer).ToList();
 
-            var sortedCustomers = (from customer in customersWithDateOfEntry
-                                   orderby customer.Item2.Year, customer.Item2.Month, customer.Item2.Day ascending
-                                   select (customer)).ToList();
+            //var customersWithDateOfEntry = (from customer in filteredCustomers
+            //                                let dateOfEntry = customer.Orders.Select(d => d.OrderDate)
+            //                                select (customer, dateOfEntry.Min())).Distinct().ToList();
+
+            //var sortedCustomers = (from customer in customersWithDateOfEntry
+            //                       orderby customer.Item2.Year, customer.Item2.Month, customer.Item2.Day ascending
+            //                       select (customer)).ToList();
 
 
 
-            return sortedCustomers;
+            return result;
         }
 
         public static IEnumerable<Customer> Linq6(IEnumerable<Customer> customers)
         {
-            var filteredCustomers = (from customer in customers
-                                     where customer.PostalCode.Any(char.IsLetter) ||
-                                     customer.Region ==  null || customer.Phone[0] != '('
-                                     select customer).ToList();
+            int parseResult;
+            var result = customers.Where(customer => !customer.Phone.StartsWith('(') ||
+            !int.TryParse(customer.PostalCode, out parseResult) ||
+            string.IsNullOrWhiteSpace(customer.Region)).ToList();
 
-            return filteredCustomers;
+            return result;
+            //var filteredCustomers = (from customer in customers
+            //                         where customer.PostalCode.Any(char.IsLetter) ||
+            //                         customer.Region ==  null || customer.Phone[0] != '('
+            //                         select customer).ToList();
+
+            //return filteredCustomers;
         }
 
         public static IEnumerable<Linq7CategoryGroup> Linq7(IEnumerable<Product> products)
@@ -112,7 +127,17 @@ namespace Task1
                                 .Select(p => (p.Key)).ToList()
                         }).ToList()
                 }).ToList();
-           
+
+            //var result = products.GroupBy(product => product.Category).
+            //    Select(categoryGroup => new Linq7CategoryGroup()
+            //    {
+            //        Category = categoryGroup.Key,
+            //        UnitsInStockGroup = categoryGroup.
+            //        OrderByDescending(group => group.UnitsInStock).
+            //        GroupBy(u => u.UnitsInStock, p => p.UnitPrice).
+            //        Select(x => new Linq7UnitsInStockGroup() { UnitsInStock = x.Key, Prices = x })
+            //    });
+
             return result;
         }
 
@@ -143,6 +168,14 @@ namespace Task1
                 products.Where(p => p.UnitPrice == products.Max(p => p.UnitPrice)).AsEnumerable()
             )).FirstOrDefault();
 
+            //var cheapProducts = products.Where(product => product.UnitPrice <= cheap);
+            //result.Add((cheap, cheapProducts));
+
+            //var middleProducts = products.Where(product => product.UnitPrice <= middle && product.UnitPrice > cheap);
+            //result.Add((middle, middleProducts));
+
+            //var expensiveProducts = products.Where(product => product.UnitPrice <= expensive && product.UnitPrice > middle);
+
             result.Add(cheapCategory);
             result.Add(middleCategory);
             result.Add(expensiveCategory);
@@ -165,6 +198,10 @@ namespace Task1
 
         public static string Linq10(IEnumerable<Supplier> suppliers)
         {
+            //string result = string.Concat((suppliers.OrderBy(supplier => supplier.Country.Length)
+            //    .ThenBy(supplier => supplier.Country.Substring(0, 1))
+            //    .Select(supplier => supplier.Country).Distinct()));
+
             var sortedList = suppliers.Select(s => s.Country).OrderBy(s => s.Length).ThenBy(s => s).Distinct().ToList();
 
             var sb = new StringBuilder();
